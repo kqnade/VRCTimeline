@@ -1,0 +1,122 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using VRCTimeline.Data;
+using VRCTimeline.Models;
+using VRCTimeline.Services.LogParser;
+
+namespace VRCTimeline.Services;
+
+/// <summary>
+/// VRChatActivityLogViewer の SQLite データベースからデータをインポートするサービス。
+/// ワールド訪問履歴とプレイヤー遭遇データを本アプリの DB に変換して取り込む。
+/// </summary>
+public class ActivityLogImportService
+{
+    /// <summary>
+    /// 指定された VRChatActivityLogViewer の DB ファイルからデータをインポートする。
+    /// 重複する訪問（同一日時・ワールド名）はスキップされる。
+    /// </summary>
+    /// <param name="dbPath">インポート元の SQLite DB ファイルパス</param>
+    /// <param name="progress">進捗メッセージの通知先</param>
+    public async Task ImportAsync(string dbPath, IProgress<string>? progress = null)
+    {
+        if (!File.Exists(dbPath))
+            throw new FileNotFoundException("データベースファイルが見つかりません。", dbPath);
+
+        progress?.Report("VRChatActivityLogViewerのデータを読み込み中...");
+
+        // ── ソース DB からワールド入室・プレイヤー遭遇データを読み取り ──
+        var worldJoins = new List<(DateTime Timestamp, string WorldId, string WorldName, string InstanceId)>();
+        var playerMeets = new List<(DateTime Timestamp, string UserName)>();
+
+        using (var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly"))
+        {
+            await conn.OpenAsync();
+
+            // ワールド入室ログ（ActivityType = 0）
+            using var joinCmd = conn.CreateCommand();
+            joinCmd.CommandText = "SELECT Timestamp, WorldID, WorldName FROM ActivityLogs WHERE ActivityType = 0 AND WorldID IS NOT NULL ORDER BY Timestamp";
+            using var joinReader = await joinCmd.ExecuteReaderAsync();
+            while (await joinReader.ReadAsync())
+            {
+                if (joinReader.IsDBNull(0) || joinReader.IsDBNull(1) || joinReader.IsDBNull(2)) continue;
+                var ts = DateTime.Parse(joinReader.GetString(0));
+                var worldIdFull = joinReader.GetString(1);
+                var worldName = joinReader.GetString(2);
+                var worldId = LogPatterns.ExtractWorldId(worldIdFull);
+                worldJoins.Add((ts, worldId, worldName, worldIdFull));
+            }
+            joinReader.Close();
+
+            // プレイヤー遭遇ログ（ActivityType = 1）
+            using var playerCmd = conn.CreateCommand();
+            playerCmd.CommandText = "SELECT Timestamp, UserName FROM ActivityLogs WHERE ActivityType = 1 AND UserName IS NOT NULL ORDER BY Timestamp";
+            using var playerReader = await playerCmd.ExecuteReaderAsync();
+            while (await playerReader.ReadAsync())
+            {
+                if (playerReader.IsDBNull(0) || playerReader.IsDBNull(1)) continue;
+                var ts = DateTime.Parse(playerReader.GetString(0));
+                var userName = playerReader.GetString(1);
+                playerMeets.Add((ts, userName));
+            }
+        }
+
+        progress?.Report($"ワールド訪問 {worldJoins.Count} 件、プレイヤー遭遇 {playerMeets.Count} 件を処理中...");
+
+        // ── 本アプリの DB にインポート ──
+        await using var db = new AppDbContext();
+        int imported = 0;
+        int skipped = 0;
+        int playerIdx = 0;
+
+        for (int i = 0; i < worldJoins.Count; i++)
+        {
+            var join = worldJoins[i];
+            var leftAt = i + 1 < worldJoins.Count ? worldJoins[i + 1].Timestamp : (DateTime?)null;
+
+            // 重複チェック
+            var exists = await db.WorldVisits.AnyAsync(v =>
+                v.JoinedAt == join.Timestamp && v.WorldName == join.WorldName);
+            if (exists)
+            {
+                skipped++;
+                continue;
+            }
+
+            var visit = new WorldVisit
+            {
+                WorldId = join.WorldId,
+                WorldName = join.WorldName,
+                InstanceId = join.InstanceId,
+                JoinedAt = join.Timestamp,
+                LeftAt = leftAt
+            };
+            db.WorldVisits.Add(visit);
+            await db.SaveChangesAsync();
+
+            // この訪問期間中のプレイヤー遭遇を紐づけ
+            while (playerIdx < playerMeets.Count && playerMeets[playerIdx].Timestamp < join.Timestamp)
+                playerIdx++;
+
+            var visitEnd = leftAt ?? DateTime.MaxValue;
+            for (int j = playerIdx; j < playerMeets.Count && playerMeets[j].Timestamp < visitEnd; j++)
+            {
+                db.PlayerSessions.Add(new PlayerSession
+                {
+                    WorldVisitId = visit.Id,
+                    DisplayName = playerMeets[j].UserName,
+                    JoinedAt = playerMeets[j].Timestamp
+                });
+            }
+
+            await db.SaveChangesAsync();
+            imported++;
+
+            if (imported % 50 == 0)
+                progress?.Report($"インポート中... {imported}/{worldJoins.Count}");
+        }
+
+        progress?.Report($"完了: {imported} 件インポート、{skipped} 件スキップ（重複）");
+    }
+
+}

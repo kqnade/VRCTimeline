@@ -1,0 +1,47 @@
+<Application x:Class="VRCTimeline.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:vm="clr-namespace:VRCTimeline.ViewModels"
+             xmlns:views="clr-namespace:VRCTimeline.Views"
+             xmlns:converters="clr-namespace:VRCTimeline.Converters"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Dark" PrimaryColor="Teal" SecondaryColor="Teal" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters -->
+            <BooleanToVisibilityConverter x:Key="BoolToVis" />
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
+            <converters:InverseBoolConverter x:Key="InverseBool" />
+            <converters:LogEntryTypeToColorConverter x:Key="LogTypeColor" />
+            <converters:PathToThumbnailConverter x:Key="PathToThumb" />
+            <converters:HexToSolidBrushConverter x:Key="HexToBrush" />
+            <converters:EqualityMultiConverter x:Key="EqualityMulti" />
+            <converters:NullToVisibilityConverter x:Key="NullToVis" />
+
+            <!-- ViewModel to View DataTemplates -->
+            <DataTemplate DataType="{x:Type vm:RealtimeMonitorViewModel}">
+                <views:RealtimeMonitorView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ActivityHistoryViewModel}">
+                <views:ActivityHistoryView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:PhotoManagerViewModel}">
+                <views:PhotoManagerView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:NotificationLogViewModel}">
+                <views:NotificationLogView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:VideoLogViewModel}">
+                <views:VideoLogView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                <views:SettingsView />
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

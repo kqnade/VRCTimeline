@@ -1,0 +1,185 @@
+<UserControl x:Class="VRCTimeline.Views.ActivityHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:controls="clr-namespace:VRCTimeline.Controls">
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Search Bar -->
+        <controls:FilterBarControl Grid.Row="0"
+            FilterDateFrom="{Binding FilterDateFrom}"
+            FilterDateTo="{Binding FilterDateTo}"
+            PlayerFilterText="{Binding SearchPlayerName}"
+            WorldFilterText="{Binding SearchWorldName}"
+            SearchCommand="{Binding LoadHistoryCommand}"
+            ShowProgressBar="{Binding IsLoading}" />
+
+        <!-- Visit Detail Panel (always visible) -->
+        <materialDesign:Card Grid.Row="1" Padding="16" Margin="0,0,0,12"
+                              materialDesign:ElevationAssist.Elevation="Dp3">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Vertical" VerticalAlignment="Top"
+                            Margin="24,0,0,0">
+                    <Button Content="写真を表示" Command="{Binding ShowPhotosForVisitCommand}"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            IsEnabled="{Binding IsVisitSelected}"
+                            Margin="0,0,0,6" />
+                    <Button Content="再参加" Command="{Binding RejoinSelectedInstanceCommand}"
+                            IsEnabled="{Binding CanRejoinSelected}"
+                            Style="{StaticResource MaterialDesignRaisedButton}" />
+                </StackPanel>
+
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock Text="参加プレイヤー"
+                                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                                   VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Margin="20,0,0,0"
+                                    Visibility="{Binding IsVisitSelected, Converter={StaticResource BoolToVis}}">
+                            <materialDesign:PackIcon Kind="Earth" Width="18" Height="18"
+                                                      VerticalAlignment="Center" Margin="0,0,8,0"
+                                                      Opacity="0.7" />
+                            <TextBlock Text="{Binding SelectedVisitWorldName}" VerticalAlignment="Center"
+                                       FontWeight="Bold" FontSize="13" />
+                            <materialDesign:PackIcon Kind="ClockTimeFourOutline" Width="16" Height="16"
+                                                      VerticalAlignment="Center" Margin="20,0,6,0"
+                                                      Opacity="0.6" />
+                            <TextBlock Text="{Binding SelectedVisitTimeRange}" VerticalAlignment="Center"
+                                       FontSize="12" Opacity="0.7" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="20,0,0,0"
+                                    Visibility="{Binding HasPlayerSummary, Converter={StaticResource BoolToVis}}">
+                            <materialDesign:PackIcon Kind="AccountSearch" Width="18" Height="18"
+                                                      VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.7" />
+                            <TextBlock Text="{Binding SearchPlayerName}" VerticalAlignment="Center"
+                                       FontWeight="Bold" FontSize="13" Margin="0,0,16,0" />
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12">
+                                <Run Text="遭遇回数: " Foreground="{DynamicResource MaterialDesignBodyLight}" />
+                                <Run Text="{Binding PlayerEncounterCount, Mode=OneWay}" FontWeight="Bold" />
+                            </TextBlock>
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12">
+                                <Run Text="合計時間: " Foreground="{DynamicResource MaterialDesignBodyLight}" />
+                                <Run Text="{Binding PlayerTotalTime, Mode=OneWay}" FontWeight="Bold" />
+                            </TextBlock>
+                        </StackPanel>
+                    </DockPanel>
+                    <ScrollViewer x:Name="PlayerScrollViewer" Height="40"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding SelectedVisitPlayers}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <materialDesign:Card Padding="10,6" Margin="4" Cursor="Hand"
+                                                          materialDesign:ElevationAssist.Elevation="Dp1">
+                                        <materialDesign:Card.InputBindings>
+                                            <MouseBinding MouseAction="LeftClick"
+                                                          Command="{Binding DataContext.SearchByPlayerCommand,
+                                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}" />
+                                        </materialDesign:Card.InputBindings>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="Medium"
+                                                       FontSize="13" />
+                                            <TextBlock Text="{Binding TimeRange}" FontSize="11"
+                                                       Opacity="0.6" />
+                                        </StackPanel>
+                                    </materialDesign:Card>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <Thumb x:Name="PlayerResizeThumb" Height="6" Cursor="SizeNS"
+                           DragDelta="PlayerResizeThumb_DragDelta"
+                           Opacity="0.4">
+                        <Thumb.Template>
+                            <ControlTemplate TargetType="Thumb">
+                                <Grid Background="Transparent">
+                                    <Border Height="2" Width="40"
+                                            Background="{DynamicResource MaterialDesignBody}"
+                                            CornerRadius="1"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            Opacity="0.4" />
+                                </Grid>
+                            </ControlTemplate>
+                        </Thumb.Template>
+                    </Thumb>
+                </StackPanel>
+            </DockPanel>
+        </materialDesign:Card>
+
+        <!-- World Visit DataGrid -->
+        <materialDesign:Card Grid.Row="2" materialDesign:ElevationAssist.Elevation="Dp1"
+                              Padding="0" ClipContent="True">
+            <DataGrid ItemsSource="{Binding WorldVisits}"
+                      SelectedItem="{Binding SelectedVisit}"
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserSortColumns="True"
+                      materialDesign:DataGridAssist.CellPadding="12 8"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                      BorderThickness="0"
+                      Background="Transparent"
+                      RowHeight="NaN">
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        <Setter Property="Focusable" Value="False" />
+                    </Style>
+                </DataGrid.CellStyle>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                        <Setter Property="Cursor" Value="Hand" />
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="日時"
+                        Binding="{Binding JoinedAtDisplay}"
+                        Width="180" />
+                    <DataGridTextColumn Header="ワールド名"
+                        Binding="{Binding WorldName}" Width="*" />
+                    <DataGridTextColumn Header="滞在時間"
+                        Binding="{Binding Duration}" Width="90" />
+                    <DataGridTextColumn Header="人数"
+                        Binding="{Binding PlayerCount}" Width="60" />
+                    <DataGridTemplateColumn Header="プレイヤー" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ItemsControl ItemsSource="{Binding PlayerNames}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource MaterialDesignCardBackground}"
+                                                    CornerRadius="8" Padding="8,2" Margin="2,1">
+                                                <TextBlock Text="{Binding}" FontSize="11"
+                                                           VerticalAlignment="Center" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

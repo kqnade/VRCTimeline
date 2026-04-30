@@ -1,0 +1,175 @@
+<UserControl x:Class="VRCTimeline.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:controls="clr-namespace:VRCTimeline.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+        <StackPanel MaxWidth="600" HorizontalAlignment="Left">
+
+            <!-- Directories -->
+            <TextBlock Text="ディレクトリ設定"
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Margin="0,0,0,12" />
+            <materialDesign:Card Padding="20" Margin="0,0,0,24">
+                <StackPanel>
+                    <TextBlock Text="VRChatログフォルダ" Margin="0,0,0,4"
+                               Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.6" />
+                    <DockPanel Margin="0,0,0,16">
+                        <Button DockPanel.Dock="Right" Content="参照"
+                                Command="{Binding BrowseLogDirectoryCommand}"
+                                Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                                Margin="8,0,0,0" />
+                        <TextBox Text="{Binding LogDirectory}" IsReadOnly="True" />
+                    </DockPanel>
+
+                    <TextBlock Text="写真フォルダ" Margin="0,0,0,4"
+                               Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.6" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="参照"
+                                Command="{Binding BrowsePhotoDirectoryCommand}"
+                                Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                                Margin="8,0,0,0" />
+                        <TextBox Text="{Binding PhotoDirectory}" IsReadOnly="True" />
+                    </DockPanel>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Appearance -->
+            <TextBlock Text="外観設定"
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Margin="0,0,0,12" />
+            <materialDesign:Card Padding="20" Margin="0,0,0,24">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,16">
+                        <ToggleButton DockPanel.Dock="Right"
+                                      IsChecked="{Binding IsDarkMode}"
+                                      Style="{StaticResource MaterialDesignSwitchToggleButton}" />
+                        <TextBlock Text="ダークモード" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <!-- Accent Color (collapsible) -->
+                    <DockPanel Margin="0,0,0,4">
+                        <Button DockPanel.Dock="Right" Content="変更"
+                                Command="{Binding ToggleAccentPickerCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="アクセントカラー" VerticalAlignment="Center" Width="80"
+                                       Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.6" />
+                            <Border Width="24" Height="24" Margin="12,0,0,0" CornerRadius="4"
+                                    Background="{Binding AccentColorHex, Converter={StaticResource HexToBrush}}" />
+                        </StackPanel>
+                    </DockPanel>
+                    <controls:ColorCirclePicker SelectedHex="{Binding AccentColorHex}" Margin="0,0,0,12"
+                                                 Visibility="{Binding IsAccentPickerOpen, Converter={StaticResource BoolToVis}}" />
+
+                    <!-- Button Text Color (collapsible) -->
+                    <DockPanel Margin="0,0,0,4">
+                        <Button DockPanel.Dock="Right" Content="変更"
+                                Command="{Binding ToggleButtonTextPickerCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="ボタン文字色" VerticalAlignment="Center" Width="80"
+                                       Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.6" />
+                            <Border Width="24" Height="24" Margin="12,0,0,0" CornerRadius="4"
+                                    Background="{Binding ButtonTextColorHex, Converter={StaticResource HexToBrush}}" />
+                        </StackPanel>
+                    </DockPanel>
+                    <controls:ColorCirclePicker SelectedHex="{Binding ButtonTextColorHex}" Margin="0,0,0,8"
+                                                 Visibility="{Binding IsButtonTextPickerOpen, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- App Settings -->
+            <TextBlock Text="アプリ設定"
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Margin="0,0,0,12" />
+            <materialDesign:Card Padding="20" Margin="0,0,0,24">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,16">
+                        <ToggleButton DockPanel.Dock="Right"
+                                      IsChecked="{Binding AutoDetectVRChat}"
+                                      Style="{StaticResource MaterialDesignSwitchToggleButton}" />
+                        <TextBlock Text="VRChat検出時にウィンドウを表示" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <DockPanel Margin="0,0,0,16">
+                        <ToggleButton DockPanel.Dock="Right"
+                                      IsChecked="{Binding LaunchOnStartup}"
+                                      Style="{StaticResource MaterialDesignSwitchToggleButton}" />
+                        <TextBlock Text="Windows起動時に実行" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <DockPanel>
+                        <ToggleButton DockPanel.Dock="Right"
+                                      IsChecked="{Binding MinimizeOnStartup}"
+                                      Style="{StaticResource MaterialDesignSwitchToggleButton}" />
+                        <TextBlock Text="起動時に最小化" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Data Management -->
+            <TextBlock Text="データ管理"
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Margin="0,0,0,12" />
+            <materialDesign:Card Padding="20" Margin="0,0,0,24">
+                <StackPanel>
+                    <!-- Import from VRChatActivityLogViewer -->
+                    <StackPanel Visibility="{Binding ShowImportSection, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="VRChatActivityLogViewer データ引き継ぎ" Margin="0,0,0,8"
+                                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                        <TextBlock Text="データベースからワールド訪問履歴とプレイヤー遭遇データをインポートします。&#x0a;「VRChatActivityLog.db」を指定してください。"
+                                   Opacity="0.6" TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Button Content="データを引き継ぐ"
+                                    Command="{Binding ImportActivityLogCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Margin="0,0,16,0" />
+                            <TextBlock Text="{Binding ImportStatus}" VerticalAlignment="Center"
+                                       Opacity="0.6" />
+                            <ProgressBar IsIndeterminate="True" Width="100" Margin="16,0,0,0"
+                                         Visibility="{Binding IsImporting, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+
+                        <Separator Margin="0,0,0,16" />
+                    </StackPanel>
+
+                    <!-- Thumbnail Cache -->
+                    <TextBlock Text="サムネイルキャッシュ" Margin="0,0,0,8"
+                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                    <TextBlock Text="動画サムネイルのキャッシュフォルダを削除できます。&#x0a;直近50件以降は自動的に削除されています。"
+                               Opacity="0.6" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,16">
+                        <Button Content="キャッシュを削除"
+                                Command="{Binding ClearThumbnailCacheCommand}"
+                                Style="{StaticResource MaterialDesignFlatMidBgButton}" />
+                        <Button Content="フォルダを表示"
+                                Command="{Binding OpenThumbnailCacheFolderCommand}"
+                                Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                                Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <Separator Margin="0,0,0,16" />
+
+                    <!-- PC Migration -->
+                    <TextBlock Text="PC移行" Margin="0,0,0,8"
+                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                    <TextBlock Text="データベースの保存先フォルダを開きます。&#x0a;PC移行時は「vrchat_activity.db」を新しいPCの同じフォルダにコピーしてください。"
+                               Opacity="0.6" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="フォルダを表示" Command="{Binding OpenDataFolderCommand}"
+                                Style="{StaticResource MaterialDesignRaisedButton}" />
+                    </StackPanel>
+                </StackPanel>
+            </materialDesign:Card>
+            <TextBlock Text="VRC Timeline   v1.0.0"
+                       Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                       Opacity="0.4" HorizontalAlignment="Right" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
