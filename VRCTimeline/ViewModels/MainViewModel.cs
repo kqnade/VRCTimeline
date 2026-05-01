@@ -72,9 +72,9 @@ public partial class MainViewModel : ObservableObject
 
         CurrentViewModel = RealtimeMonitorVm;
 
-        // VRChat プロセス監視（20秒間隔）と写真監視を開始
+        // VRChat プロセス監視（3秒間隔）と写真監視を開始
         _processMonitor.VRChatStatusChanged += OnVRChatStatusChanged;
-        _processMonitor.Start(20);
+        _processMonitor.Start(3);
         _photoWatcher.Start();
 
         // 画面間ナビゲーションイベントの購読
