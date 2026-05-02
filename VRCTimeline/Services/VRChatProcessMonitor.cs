@@ -32,11 +32,22 @@ public class VRChatProcessMonitor : IDisposable
     {
         try
         {
-            IsVRChatRunning = Process.GetProcessesByName("VRChat").Length > 0;
-            if (IsVRChatRunning != _wasRunning)
+            // GetProcessesByName が返す Process は IDisposable で、毎回 OS ハンドルを保持する。
+            // 3 秒間隔で呼ばれるためここで dispose しないと VRChat 実行中に
+            // 1 時間で 1200 個以上のプロセスハンドルがリークする。
+            var processes = Process.GetProcessesByName("VRChat");
+            try
             {
-                _wasRunning = IsVRChatRunning;
-                VRChatStatusChanged?.Invoke(IsVRChatRunning);
+                IsVRChatRunning = processes.Length > 0;
+                if (IsVRChatRunning != _wasRunning)
+                {
+                    _wasRunning = IsVRChatRunning;
+                    VRChatStatusChanged?.Invoke(IsVRChatRunning);
+                }
+            }
+            finally
+            {
+                foreach (var p in processes) p.Dispose();
             }
         }
         catch
