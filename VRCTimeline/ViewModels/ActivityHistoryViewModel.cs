@@ -180,8 +180,9 @@ public partial class ActivityHistoryViewModel : ObservableObject
         try
         {
             // UI スレッドの値をキャプチャ（バックグラウンド処理用）
+            // 終了日は inclusive にするため翌日 00:00 を排他的上限として扱う
             var dateFrom = FilterDateFrom;
-            var dateTo = FilterDateTo;
+            var dateTo = FilterDateTo.Date.AddDays(1);
             var searchPlayer = SearchPlayerName;
             var searchWorld = SearchWorldName;
             var searchPlayerUserId = _searchPlayerUserId;
@@ -202,7 +203,7 @@ public partial class ActivityHistoryViewModel : ObservableObject
                 if (filterVisitId.HasValue)
                     query = query.Where(v => v.Id == filterVisitId.Value);
                 else
-                    query = query.Where(v => v.JoinedAt >= dateFrom && v.JoinedAt <= dateTo);
+                    query = query.Where(v => v.JoinedAt >= dateFrom && v.JoinedAt < dateTo);
 
                 var allVisits = await query
                     .OrderByDescending(v => v.JoinedAt)

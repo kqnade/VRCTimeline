@@ -78,9 +78,13 @@ public partial class VideoLogViewModel : ObservableObject
         {
             await using var db = new AppDbContext();
 
+            // 終了日は inclusive にするため翌日 00:00 を排他的上限として扱う
+            var dateFrom = FilterDateFrom;
+            var dateToExclusive = FilterDateTo.Date.AddDays(1);
+
             var allRecords = await db.VideoRecords
                 .Include(v => v.WorldVisit)
-                .Where(v => v.DetectedAt >= FilterDateFrom && v.DetectedAt <= FilterDateTo)
+                .Where(v => v.DetectedAt >= dateFrom && v.DetectedAt < dateToExclusive)
                 .OrderByDescending(v => v.DetectedAt)
                 .ToListAsync();
 

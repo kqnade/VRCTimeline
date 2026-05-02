@@ -91,9 +91,13 @@ public partial class NotificationLogViewModel : ObservableObject
         {
             await using var db = new AppDbContext();
 
+            // 終了日は inclusive にするため翌日 00:00 を排他的上限として扱う
+            var dateFrom = FilterDateFrom;
+            var dateToExclusive = FilterDateTo.Date.AddDays(1);
+
             var query = db.NotificationRecords
                 .Include(n => n.WorldVisit)
-                .Where(n => n.ReceivedAt >= FilterDateFrom && n.ReceivedAt <= FilterDateTo);
+                .Where(n => n.ReceivedAt >= dateFrom && n.ReceivedAt < dateToExclusive);
 
             // 種別フィルター（"すべて" 相当かどうかは言語に依存しない IsAllFilter で判定）
             if (!IsAllFilter(SelectedTypeFilter))
